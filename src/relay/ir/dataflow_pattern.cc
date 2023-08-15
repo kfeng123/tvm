@@ -504,6 +504,15 @@ TVM_STATIC_IR_FUNCTOR(DFPatternPrinter, vtable)
                        << path_pattern_string << ", " << child_pattern_string << ")";
     });
 
+bool DFPattern::is_static() const {
+  return operator->()->static_;
+}
+
+void DFPattern::to_non_static() const {
+  DFPatternNode* ptr = static_cast<DFPatternNode*>(get_mutable());
+  ptr->static_ = false;
+}
+
 // Syntatic Sugar
 DFPattern DFPattern::operator()(const std::vector<DFPattern>& args) const {
   return CallPattern(GetRef<DFPattern>(this->get()), Array<DFPattern>(args));

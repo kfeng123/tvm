@@ -51,7 +51,7 @@ void DFPatternMatcher::ClearMap(size_t watermark) {
 }
 
 bool DFPatternMatcher::VisitDFPattern(const DFPattern& pattern, const Expr& expr) {
-  if (memoize_ && memo_.count(pattern)) {
+  if (pattern.is_static() && memo_.count(pattern)) {
     ICHECK_EQ(memo_[pattern].size(), 1);
     return expr.same_as(memo_[pattern][0]);
   } else {
@@ -306,9 +306,7 @@ bool DFPatternMatcher::MatchesPath(const DominatorPatternNode* op, const Expr& e
   for (auto node : index_node->inputs_) {
     if (!(call_node && node->ref() == call_node->op)) {
       arg_counter += 1;
-      memoize_ = true;
       if (!VisitDFPattern(op->parent, node->ref())) {
-        memoize_ = false;
         if (!VisitDFPattern(op->path, node->ref())) {
           return false;
         }
@@ -347,9 +345,14 @@ bool DFPatternMatcher::DominatesParent(const DominatorPatternNode* op, const Exp
 }
 
 bool DFPatternMatcher::VisitDFPattern_(const DominatorPatternNode* op, const Expr& expr) {
+  std::unique_ptr<IndexedGraph<DFPattern>> path_graph_ = CreateIndexedGraph(op->path);
+  for (PostDfsIndex index = 0; index < path_graph_->size(); ++index) {
+    auto node = path_graph_->index_to_node(index);
+    Downcast<DFPattern>(node->ref()).to_non_static();
+  }
+  //op->path.to_non_static();
   if (VisitDFPattern(op->child, expr)) {
     bool matches_path = MatchesPath(op, expr);
-    memoize_ = true;
     if (matches_path) {
       return DominatesParent(op, expr);
     }

@@ -83,7 +83,6 @@ class DFPatternMatcher : public DFPatternFunctor<bool(const DFPattern&, const Ex
   const IndexedGraph<Expr>* expr_graph_;
   std::unordered_map<DFPattern, Array<Expr>, ObjectPtrHash, ObjectPtrEqual> memo_;
   std::vector<DFPattern> matched_nodes_;
-  bool memoize_ = true;
 };
 
 /*!
